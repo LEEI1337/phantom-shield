@@ -1,11 +1,14 @@
 """Qdrant vector-store wrapper for RAG and GDPR Article 17 compliance.
 
-Provides async search, upsert, and user-level deletion (right to be
-forgotten) operations.
+Provides async search, upsert, user-level deletion (right to be
+forgotten), and time-based retention policy (``cleanup_expired``)
+operations.  Every upserted document automatically receives a
+``created_at`` timestamp for retention enforcement.
 """
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 import structlog
@@ -16,10 +19,14 @@ from qdrant_client.models import (
     Filter,
     MatchValue,
     PointStruct,
+    Range,
     VectorParams,
 )
 
 logger = structlog.get_logger(__name__)
+
+# Default retention: 90 days in seconds
+_DEFAULT_RETENTION_SECONDS: int = 90 * 24 * 60 * 60
 
 
 class VectorStore:
@@ -32,6 +39,9 @@ class VectorStore:
             use if it does not exist).
         vector_size: Dimensionality of stored embeddings (default ``384``
             for ``all-MiniLM-L6-v2``).
+        retention_seconds: Maximum age of stored vectors in seconds.
+            Vectors older than this are eligible for removal via
+            :meth:`cleanup_expired`.  Set to ``0`` to disable retention.
     """
 
     def __init__(
@@ -40,9 +50,11 @@ class VectorStore:
         port: int = 6333,
         collection_name: str = "nss_documents",
         vector_size: int = 384,
+        retention_seconds: int = _DEFAULT_RETENTION_SECONDS,
     ) -> None:
         self.collection_name = collection_name
         self._vector_size = vector_size
+        self._retention_seconds = retention_seconds
         self._client = QdrantClient(host=host, port=port)
         self._ensure_collection()
 
@@ -97,11 +109,18 @@ class VectorStore:
     ) -> None:
         """Insert or update a single document.
 
+        Automatically injects a ``created_at`` Unix timestamp into the
+        payload for retention-policy enforcement.
+
         Args:
             doc_id: Unique document identifier.
             embedding: Document embedding vector.
             payload: Arbitrary metadata stored alongside the vector.
         """
+        # Inject creation timestamp for retention policy
+        if "created_at" not in payload:
+            payload["created_at"] = time.time()
+
         self._client.upsert(
             collection_name=self.collection_name,
             points=[
@@ -136,4 +155,36 @@ class VectorStore:
         )
         logger.info("user_data_deleted", user_id=user_id)
         # Qdrant does not return a count on delete; return 0 as sentinel.
+        return 0
+
+    async def cleanup_expired(self) -> int:
+        """Remove vectors older than the configured retention period.
+
+        Uses the ``created_at`` payload field to identify expired
+        documents.  Returns ``0`` (Qdrant does not report delete counts
+        in all versions).
+
+        Returns:
+            Approximate number of points deleted (always 0 for Qdrant).
+        """
+        if self._retention_seconds <= 0:
+            return 0
+
+        cutoff = time.time() - self._retention_seconds
+        self._client.delete(
+            collection_name=self.collection_name,
+            points_selector=Filter(
+                must=[
+                    FieldCondition(
+                        key="created_at",
+                        range=Range(lt=cutoff),
+                    ),
+                ],
+            ),
+        )
+        logger.info(
+            "vectors_expired_cleanup",
+            collection=self.collection_name,
+            cutoff_ts=cutoff,
+        )
         return 0

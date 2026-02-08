@@ -14,6 +14,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from nss.audit import AuditLogger
+from nss.auth import JWTMiddleware
 from nss.config import config
 from nss.middleware import SecurityHeadersMiddleware, TracingMiddleware
 from nss.governance.dpia import DPIAGenerator
@@ -49,9 +50,12 @@ class DPIARequest(BaseModel):
 # -- Shared instances --
 
 _policy_engine = PolicyEngine()
-_privacy_tracker = PrivacyBudgetTracker(total_budget=config.privacy_epsilon_budget)
+_privacy_tracker = PrivacyBudgetTracker(
+    total_budget=config.privacy_epsilon_budget,
+    redis_url=config.redis_url,
+)
 _dpia_generator = DPIAGenerator()
-_audit_logger = AuditLogger()
+_audit_logger = AuditLogger(redis_url=config.redis_url)
 
 
 app = FastAPI(
@@ -61,6 +65,7 @@ app = FastAPI(
 
 app.add_middleware(TracingMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(JWTMiddleware, secret=config.jwt_secret)
 
 
 @app.get("/health")
@@ -129,8 +134,13 @@ async def audit_all() -> dict[str, Any]:
 
 
 if __name__ == "__main__":
+    kwargs: dict[str, Any] = {}
+    if config.tls_cert_path and config.tls_key_path:
+        kwargs["ssl_certfile"] = config.tls_cert_path
+        kwargs["ssl_keyfile"] = config.tls_key_path
     uvicorn.run(
         "nss.governance.server:app",
         host=config.gateway_host,
         port=config.governance_port,
+        **kwargs,
     )

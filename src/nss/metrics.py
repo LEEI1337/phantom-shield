@@ -90,3 +90,26 @@ def metrics_snapshot() -> dict[str, Any]:
             "nss_guardian_latency_ms": nss_guardian_latency.snapshot(),
         },
     }
+
+
+def prometheus_export() -> str:
+    """Export all metrics in Prometheus/OpenMetrics text format."""
+    _counters = [
+        nss_requests_total,
+        nss_requests_blocked,
+        nss_pii_entities_redacted,
+        nss_privacy_budget_consumed,
+    ]
+    _histograms = [nss_request_latency, nss_guardian_latency]
+
+    lines: list[str] = []
+    for c in _counters:
+        lines.append(f"# HELP {c.name} {c.description}")
+        lines.append(f"# TYPE {c.name} counter")
+        lines.append(f"{c.name} {c.value}")
+    for h in _histograms:
+        lines.append(f"# HELP {h.name} {h.description}")
+        lines.append(f"# TYPE {h.name} histogram")
+        lines.append(f"{h.name}_count {h.count}")
+        lines.append(f"{h.name}_sum {h._sum}")
+    return "\n".join(lines) + "\n"

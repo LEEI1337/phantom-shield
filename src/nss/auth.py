@@ -88,7 +88,7 @@ class JWTMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Any) -> Any:
         # Skip auth for health/metrics/docs endpoints
         path = request.url.path
-        if path in ("/health", "/metrics", "/docs", "/openapi.json"):
+        if path in ("/health", "/metrics", "/metrics/prometheus", "/docs", "/openapi.json"):
             return await call_next(request)
         
         auth_header = request.headers.get("Authorization", "")

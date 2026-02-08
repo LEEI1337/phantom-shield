@@ -75,3 +75,39 @@ class TestVectorStore:
             VectorStore(collection_name="new_collection")
 
         mock_qdrant_client.create_collection.assert_called_once()
+
+    async def test_upsert_injects_created_at(self, vector_store, mock_qdrant_client) -> None:
+        """upsert() should automatically add a created_at timestamp."""
+        payload = {"text": "Test", "user_id": "u1"}
+        await vector_store.upsert(
+            doc_id="doc-ts",
+            embedding=[0.1] * 384,
+            payload=payload,
+        )
+        # The payload dict should now have created_at
+        assert "created_at" in payload
+        assert isinstance(payload["created_at"], float)
+
+    async def test_upsert_preserves_existing_created_at(self, vector_store, mock_qdrant_client) -> None:
+        """upsert() should not overwrite an existing created_at."""
+        payload = {"text": "Test", "created_at": 1000000.0}
+        await vector_store.upsert(
+            doc_id="doc-existing",
+            embedding=[0.1] * 384,
+            payload=payload,
+        )
+        assert payload["created_at"] == 1000000.0
+
+    async def test_cleanup_expired(self, vector_store, mock_qdrant_client) -> None:
+        """cleanup_expired() should call Qdrant delete with a range filter."""
+        result = await vector_store.cleanup_expired()
+        assert result == 0
+        mock_qdrant_client.delete.assert_called_once()
+
+    async def test_cleanup_disabled_when_retention_zero(self, mock_qdrant_client) -> None:
+        """cleanup_expired() is a no-op when retention_seconds is 0."""
+        with patch("nss.knowledge.vector_store.QdrantClient", return_value=mock_qdrant_client):
+            store = VectorStore(retention_seconds=0)
+        result = await store.cleanup_expired()
+        assert result == 0
+        mock_qdrant_client.delete.assert_not_called()

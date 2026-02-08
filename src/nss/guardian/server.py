@@ -14,6 +14,7 @@ import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from nss.auth import JWTMiddleware
 from nss.config import config
 from nss.middleware import SecurityHeadersMiddleware, TracingMiddleware
 from nss.guardian.apex import APEXRouter
@@ -90,6 +91,7 @@ app = FastAPI(
 
 app.add_middleware(TracingMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(JWTMiddleware, secret=config.jwt_secret)
 
 
 @app.get("/health")
@@ -129,8 +131,13 @@ async def vigil_check(request: VIGILRequest) -> dict[str, Any]:
 
 
 if __name__ == "__main__":
+    kwargs: dict[str, Any] = {}
+    if config.tls_cert_path and config.tls_key_path:
+        kwargs["ssl_certfile"] = config.tls_cert_path
+        kwargs["ssl_keyfile"] = config.tls_key_path
     uvicorn.run(
         "nss.guardian.server:app",
         host=config.gateway_host,
         port=config.guardian_port,
+        **kwargs,
     )

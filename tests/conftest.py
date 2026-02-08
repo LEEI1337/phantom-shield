@@ -4,8 +4,18 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from nss.auth import create_token
 from nss.config import NSSConfig
 from nss.models import NSSRequest
+
+_TEST_JWT_SECRET = "change-me-in-production"
+
+
+@pytest.fixture
+def auth_headers() -> dict[str, str]:
+    """JWT Authorization header for test requests (admin role)."""
+    token = create_token("test-user", "admin", _TEST_JWT_SECRET)
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture

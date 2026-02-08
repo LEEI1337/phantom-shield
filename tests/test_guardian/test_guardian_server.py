@@ -4,7 +4,15 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
+from nss.auth import create_token
 from nss.guardian.server import app
+
+_JWT_SECRET = "change-me-in-production"
+
+
+def _auth_headers(role: str = "admin") -> dict[str, str]:
+    token = create_token("test-user", role, _JWT_SECRET)
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
@@ -47,7 +55,7 @@ async def test_health(_mock_guardian_components) -> None:
 
 async def test_mars_score(_mock_guardian_components) -> None:
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        resp = await client.post("/v1/mars/score", json={"text": "Hello world"})
+        resp = await client.post("/v1/mars/score", json={"text": "Hello world"}, headers=_auth_headers())
         assert resp.status_code == 200
         data = resp.json()
         assert "score" in data
@@ -55,7 +63,7 @@ async def test_mars_score(_mock_guardian_components) -> None:
 
 async def test_sentinel_check(_mock_guardian_components) -> None:
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        resp = await client.post("/v1/sentinel/check", json={"text": "normal query"})
+        resp = await client.post("/v1/sentinel/check", json={"text": "normal query"}, headers=_auth_headers())
         assert resp.status_code == 200
         data = resp.json()
         assert "is_safe" in data
@@ -63,7 +71,7 @@ async def test_sentinel_check(_mock_guardian_components) -> None:
 
 async def test_apex_route(_mock_guardian_components) -> None:
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        resp = await client.post("/v1/apex/route", json={"query": "test", "confidence": 0.9, "budget_remaining": 10.0})
+        resp = await client.post("/v1/apex/route", json={"query": "test", "confidence": 0.9, "budget_remaining": 10.0}, headers=_auth_headers())
         assert resp.status_code == 200
         data = resp.json()
         assert "model_selected" in data
@@ -71,13 +79,13 @@ async def test_apex_route(_mock_guardian_components) -> None:
 
 async def test_shield_enhance(_mock_guardian_components) -> None:
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        resp = await client.post("/v1/shield/enhance", json={"prompt": "Hello"})
+        resp = await client.post("/v1/shield/enhance", json={"prompt": "Hello"}, headers=_auth_headers())
         assert resp.status_code == 200
         assert "enhanced_prompt" in resp.json()
 
 
 async def test_vigil_check(_mock_guardian_components) -> None:
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        resp = await client.post("/v1/vigil/check", json={"tool_name": "search", "args": {"q": "test"}, "user_id": "u1"})
+        resp = await client.post("/v1/vigil/check", json={"tool_name": "search", "args": {"q": "test"}, "user_id": "u1"}, headers=_auth_headers())
         assert resp.status_code == 200
         assert "verdict" in resp.json()

@@ -63,6 +63,15 @@ class NSSConfig(BaseSettings):
     tls_cert_path: str = ""
     tls_key_path: str = ""
 
+    # -- SAG Encryption (optional) ----------------------------------------
+    sag_encryption_key: str = ""  # 64-char hex for 32 bytes; empty = disabled
+
+    # -- RAG (optional) ---------------------------------------------------
+    enable_rag: bool = False
+
+    # -- Privacy per-query ------------------------------------------------
+    privacy_epsilon_per_query: float = 0.1
+
 
 # Module-level singleton (import and use directly).
 config = NSSConfig()

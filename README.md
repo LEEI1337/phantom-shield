@@ -6,7 +6,7 @@
 [![Version](https://img.shields.io/badge/Version-3.1.1-blue.svg)](https://github.com/LEEI1337/NSS/releases)
 [![Status](https://img.shields.io/badge/Status-Concept%20%2F%20RFC-orange.svg)](#)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/Tests-163%20passing-brightgreen.svg)](#test-suite)
+[![Tests](https://img.shields.io/badge/Tests-209%20passing-brightgreen.svg)](#test-suite)
 [![CI](https://img.shields.io/github/actions/workflow/status/LEEI1337/NSS/ci.yml?branch=main&label=CI)](https://github.com/LEEI1337/NSS/actions)
 
 **Sovereign, GDPR-compliant AI infrastructure standard for the European Union.**
@@ -28,7 +28,8 @@ NSS is a conceptual framework designed to meet European regulatory requirements,
 ```
 +=====================================================================+
 |                   Cross-Cutting Concerns                            |
-|   JWT Auth (RBAC)  |  Audit (SHA-256 Chain)  |  Metrics  |  Cache  |
+|   JWT Auth (RBAC)  |  HMAC Signing  |  Audit (SHA-256 + Redis)     |
+|   Metrics (Prometheus) | Cache | TLS 1.3 | Policy Engine            |
 |   Middleware: SecurityHeaders | Tracing | RateLimit                 |
 +=====================================================================+
 |                    Layer 5: Governance Plane [:11339]                |
@@ -47,7 +48,8 @@ NSS is a conceptual framework designed to meet European regulatory requirements,
 |        DPSparseVoteRAG (DP Noise)  |  Tool Sandbox (WASM sim)      |
 +=====================================================================+
 |                    Layer 1: Knowledge Fabric [:6333]                 |
-|        Qdrant Vector DB  |  Sentence-Transformer Embeddings        |
+|  Qdrant Vector DB | SAG Encryption (AES-256-GCM) | RAG Pipeline    |
+|  Sentence-Transformer Embeddings | Retention Policy (90d)           |
 +=====================================================================+
 |                    Metrics Server [:11340]                           |
 +=====================================================================+
@@ -79,7 +81,13 @@ See [Port Schema](docs/architecture/port-schema.md) for network isolation and fi
 - **EU AI Act Aligned** -- 96/100 compliance rating with full transparency, auditability, and risk classification
 - **Cost Optimization** -- Up to 66% API cost savings via APEX intelligent model routing
 - **Differential Privacy** -- Laplace noise in RAG queries with per-user epsilon budget tracking
-- **Immutable Audit Trail** -- SHA-256 hash-chain audit logging for tamper-evident compliance
+- **Immutable Audit Trail** -- SHA-256 hash-chain audit logging with optional Redis persistence for tamper-evident compliance
+- **SAG Encryption** -- AES-256-GCM encryption of vector payloads at rest in the Knowledge Fabric
+- **RAG Pipeline** -- Retrieval-Augmented Generation with encrypted document storage and context injection
+- **GDPR Art. 17 Unlearning** -- Automated right-to-be-forgotten orchestrator (budget reset + vector deletion)
+- **Vector Retention Policy** -- Automatic cleanup of expired vectors (configurable, default 90 days)
+- **Prometheus Metrics** -- OpenMetrics text format export for monitoring integration
+- **TLS 1.3 Ready** -- Optional TLS configuration for all microservices
 - **Open Source + Commercial Support** -- Dual-licensed under AGPL-3.0 and Commercial License
 
 ---
@@ -119,26 +127,33 @@ curl http://127.0.0.1:11338/health
 curl http://127.0.0.1:11339/health
 curl http://127.0.0.1:11340/health
 
-# Example: Process a request through the full pipeline
+# Example: Process a request through the full pipeline (requires JWT + HMAC)
 curl -X POST http://127.0.0.1:11337/v1/process \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <JWT_TOKEN>" \
+  -H "X-HMAC-Signature: <HMAC_SIG>" \
   -d '{"user_id": "user-1", "message": "Was ist GDPR?", "privacy_tier": 1}'
 
-# Example: Check Guardian Shield directly
+# Example: Check Guardian Shield directly (requires JWT)
 curl -X POST http://127.0.0.1:11338/v1/shield/enhance \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <JWT_TOKEN>" \
   -d '{"prompt": "Explain data sovereignty"}'
 
-# Example: Evaluate a governance policy
+# Example: Evaluate a governance policy (requires JWT)
 curl -X POST http://127.0.0.1:11339/v1/policy/evaluate \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <JWT_TOKEN>" \
   -d '{"role": "viewer", "pii_detected": true, "privacy_tier": 0}'
+
+# Example: Prometheus metrics (no auth required)
+curl http://127.0.0.1:11340/metrics/prometheus
 ```
 
 ### Run Tests
 
 ```bash
-# Run all 163 tests
+# Run all 209 tests
 make test
 
 # Run with coverage report
@@ -162,7 +177,9 @@ make typecheck
 |--------|----------|-------------|
 | `GET` | `/health` | Liveness/readiness probe |
 | `GET` | `/metrics` | Operational metrics |
-| `POST` | `/v1/process` | Full 6-layer pipeline (PII -> SENTINEL -> MARS -> APEX -> SHIELD -> LLM) |
+| `POST` | `/v1/process` | Full 6-layer pipeline (HMAC → Policy → PII → SENTINEL → MARS → APEX → SHIELD → LLM → Budget) |
+| `POST` | `/v1/tools/execute` | Sandboxed tool execution with VIGIL pre-check |
+| `POST` | `/v1/unlearn/{user_id}` | GDPR Art. 17 right-to-be-forgotten orchestrator |
 
 ### Guardian Shield (`:11338`)
 
@@ -193,6 +210,7 @@ make typecheck
 |--------|----------|-------------|
 | `GET` | `/health` | Service health check |
 | `GET` | `/metrics` | Full metrics snapshot (counters + histograms) |
+| `GET` | `/metrics/prometheus` | Prometheus/OpenMetrics text format export |
 
 ---
 
@@ -225,7 +243,7 @@ make typecheck
 |--------|------|-------------|
 | Governance Server | `src/nss/governance/server.py` | FastAPI microservice for governance endpoints |
 | Policy Engine | `src/nss/governance/policy_engine.py` | OPA/Rego simulation: role-based risk limits, PII privacy tiers, tool allowlists |
-| Privacy Budget | `src/nss/governance/privacy_budget.py` | Per-user differential privacy epsilon budget tracking and enforcement |
+| Privacy Budget | `src/nss/governance/privacy_budget.py` | Per-user differential privacy epsilon budget tracking with optional Redis persistence |
 | DPIA Generator | `src/nss/governance/dpia.py` | GDPR Article 35 DPIA auto-generation with 5 sections and markdown export |
 
 ### Layer 2: Agent Execution
@@ -239,8 +257,10 @@ make typecheck
 
 | Module | File | Description |
 |--------|------|-------------|
-| Vector Store | `src/nss/knowledge/vector_store.py` | Qdrant wrapper with GDPR Art. 17 right-to-erasure (`delete_by_user`) |
+| Vector Store | `src/nss/knowledge/vector_store.py` | Qdrant wrapper with GDPR Art. 17 right-to-erasure, retention policy, auto-timestamps |
 | Embeddings | `src/nss/knowledge/embeddings.py` | Sentence-transformer embedding service (all-MiniLM-L6-v2) |
+| SAG Encryption | `src/nss/knowledge/sag_encryption.py` | AES-256-GCM encryption/decryption of vector payloads at rest |
+| RAG Pipeline | `src/nss/knowledge/rag_pipeline.py` | Retrieval-Augmented Generation: embed → search → decrypt → augment prompt |
 
 ### Cross-Cutting Infrastructure
 
@@ -249,7 +269,7 @@ make typecheck
 | Config | `src/nss/config.py` | Environment-based configuration with `NSS_` prefix |
 | Models | `src/nss/models.py` | Pydantic v2 data models (NSSRequest, NSSResponse, RiskScore, SentinelResult, etc.) |
 | Auth | `src/nss/auth.py` | JWT creation/verification (HS256, 15min), RBAC (Admin/DataProcessor/Auditor/Viewer) |
-| Audit | `src/nss/audit.py` | Immutable audit logging with SHA-256 hash-chain integrity verification |
+| Audit | `src/nss/audit.py` | Immutable audit logging with SHA-256 hash-chain and optional Redis persistence |
 | Metrics | `src/nss/metrics.py` | Lightweight Counter/Histogram registry with snapshot export |
 | Middleware | `src/nss/middleware.py` | SecurityHeaders, TracingMiddleware (X-Trace-ID), RateLimitMiddleware (sliding window) |
 | Cache | `src/nss/cache.py` | Redis async caching with graceful degradation (no-op when unavailable) |
@@ -261,7 +281,7 @@ make typecheck
 
 ## Test Suite
 
-**163 tests** across **27 test files**, organized by layer:
+**209 tests** across **35 test files**, organized by layer:
 
 | Category | Tests | Description |
 |----------|-------|-------------|
@@ -269,12 +289,12 @@ make typecheck
 | Guardian | 25 | MARS, APEX, SENTINEL (rules + async + embedding), SHIELD, VIGIL |
 | Governance | 18 | Policy engine, privacy budget, DPIA, governance server |
 | Agent | 13 | DPSparseVoteRAG (noise, budget, fallback), tool sandbox |
-| Knowledge | 8 | Vector store, embeddings |
+| Knowledge | 21 | Vector store (retention, timestamps), embeddings, SAG encryption, RAG pipeline |
 | LLM | 6 | Ollama client (generate, confidence, health) |
 | Cross-Cutting | 25 | Audit, auth, metrics, middleware, cache, metrics server |
 | Guardian Server | 6 | All Guardian endpoints via TestClient |
 | Governance Server | 5 | All Governance endpoints via TestClient |
-| **Integration** | **24** | **Full pipeline, security pipeline, privacy pipeline, multi-service** |
+| **Integration** | **46** | **Full pipeline, security enforcement, persistence, unlearning, privacy, multi-service, wiring** |
 
 ```bash
 make test           # Run all tests
@@ -297,6 +317,7 @@ make typecheck      # Type checking (mypy)
 ### Immutable Audit Logging
 
 - **SHA-256 hash-chain**: each entry references the previous hash
+- **Redis persistence**: optional durable storage via `RPUSH` to `nss:audit:log` with graceful degradation
 - **Tamper detection**: `verify_integrity()` validates the entire chain
 - **Microsecond timestamps** with UUID4 audit IDs
 - Audit events span all layers (gateway, guardian, governance, agent)
@@ -305,7 +326,7 @@ make typecheck      # Type checking (mypy)
 
 - **Counters**: `nss_requests_total`, `nss_requests_blocked`, `nss_pii_entities_redacted`, `nss_privacy_budget_consumed`
 - **Histograms**: `nss_request_latency_ms`, `nss_guardian_latency_ms`
-- **Export**: JSON snapshot via `GET /metrics` on port 11340
+- **Export**: JSON snapshot via `GET /metrics` and Prometheus text format via `GET /metrics/prometheus` on port 11340
 
 ### Middleware Stack
 
@@ -347,7 +368,8 @@ make typecheck      # Type checking (mypy)
 | Auth | PyJWT | HS256 JWT tokens with RBAC |
 | Embeddings | sentence-transformers | all-MiniLM-L6-v2 for SENTINEL and RAG |
 | Runtime | Python 3.11+ | Core application runtime |
-| Testing | pytest | 163 tests with asyncio support |
+| Encryption | cryptography | AES-256-GCM for SAG vector payload encryption |
+| Testing | pytest | 209 tests with asyncio support |
 
 ---
 
@@ -399,8 +421,10 @@ src/nss/
     dp_sparse_vote.py    # DPSparseVoteRAG with Laplace noise
     tool_isolation.py    # Tool sandbox (WASM simulation)
   knowledge/
-    vector_store.py      # Qdrant vector store wrapper
+    vector_store.py      # Qdrant vector store with retention policy
     embeddings.py        # Sentence-transformer embeddings
+    sag_encryption.py    # AES-256-GCM payload encryption
+    rag_pipeline.py      # RAG pipeline (embed, search, augment)
   llm/
     ollama_client.py     # Async Ollama client
     model_config.py      # Model tier configuration

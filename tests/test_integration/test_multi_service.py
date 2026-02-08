@@ -12,9 +12,17 @@ from typing import Any
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from nss.auth import create_token
 from nss.guardian.server import app as guardian_app
 from nss.governance.server import app as governance_app
 from nss.metrics_server import app as metrics_app
+
+_JWT_SECRET = "change-me-in-production"
+
+
+def _auth_headers(role: str = "admin") -> dict[str, str]:
+    token = create_token("test-user", role, _JWT_SECRET)
+    return {"Authorization": f"Bearer {token}"}
 
 
 # ---------------------------------------------------------------------------
@@ -67,7 +75,7 @@ def test_all_services_health(guardian_client, governance_client, metrics_client)
 
 def test_guardian_shield_enhance(guardian_client) -> None:
     """Guardian Shield /v1/shield/enhance wraps prompt with defensive tokens."""
-    resp = guardian_client.post("/v1/shield/enhance", json={"prompt": "Hello world"})
+    resp = guardian_client.post("/v1/shield/enhance", json={"prompt": "Hello world"}, headers=_auth_headers())
     assert resp.status_code == 200
     data = resp.json()
     assert "enhanced_prompt" in data
@@ -81,7 +89,7 @@ def test_guardian_vigil_endpoint(guardian_client) -> None:
         "tool_name": "search",
         "args": {"query": "test"},
         "user_id": "user-1",
-    })
+    }, headers=_auth_headers())
     assert resp.status_code == 200
     assert resp.json()["verdict"] == "ALLOW"
 
@@ -90,28 +98,28 @@ def test_guardian_vigil_endpoint(guardian_client) -> None:
         "tool_name": "evil_tool",
         "args": {},
         "user_id": "user-1",
-    })
+    }, headers=_auth_headers())
     assert resp2.status_code == 200
     assert resp2.json()["verdict"] == "DENY"
 
 
 def test_governance_policy_evaluation(governance_client) -> None:
     """Governance Plane /v1/policy/evaluate enforces role-based policies."""
-    # Viewer with PII but low privacy tier → denied
+    # Viewer with PII but low privacy tier -> denied
     resp = governance_client.post("/v1/policy/evaluate", json={
         "role": "viewer",
         "pii_detected": True,
         "privacy_tier": 0,
-    })
+    }, headers=_auth_headers())
     assert resp.status_code == 200
     data = resp.json()
     assert data["allowed"] is False
     assert len(data["violations"]) > 0
 
-    # Admin with no PII → allowed
+    # Admin with no PII -> allowed
     resp2 = governance_client.post("/v1/policy/evaluate", json={
         "role": "admin",
-    })
+    }, headers=_auth_headers())
     assert resp2.status_code == 200
     assert resp2.json()["allowed"] is True
 
@@ -119,7 +127,7 @@ def test_governance_policy_evaluation(governance_client) -> None:
 def test_governance_privacy_budget(governance_client) -> None:
     """Governance Plane privacy budget endpoints track consumption."""
     # Check initial budget
-    resp = governance_client.get("/v1/privacy/budget/integration-test-user")
+    resp = governance_client.get("/v1/privacy/budget/integration-test-user", headers=_auth_headers())
     assert resp.status_code == 200
     initial = resp.json()["remaining_epsilon"]
 
@@ -127,12 +135,12 @@ def test_governance_privacy_budget(governance_client) -> None:
     resp2 = governance_client.post("/v1/privacy/consume", json={
         "epsilon": 0.1,
         "user_id": "integration-test-user",
-    })
+    }, headers=_auth_headers())
     assert resp2.status_code == 200
     assert resp2.json()["success"] is True
 
     # Check reduced budget
-    resp3 = governance_client.get("/v1/privacy/budget/integration-test-user")
+    resp3 = governance_client.get("/v1/privacy/budget/integration-test-user", headers=_auth_headers())
     assert resp3.json()["remaining_epsilon"] < initial
 
 
@@ -143,7 +151,7 @@ def test_governance_dpia_generation(governance_client) -> None:
         "data_categories": ["personal_data", "health_data"],
         "risk_tier": 2,
         "privacy_budget_remaining": 0.8,
-    })
+    }, headers=_auth_headers())
     assert resp.status_code == 200
     data = resp.json()
     assert "report_id" in data
@@ -154,10 +162,10 @@ def test_governance_dpia_generation(governance_client) -> None:
 def test_governance_audit_trail(governance_client) -> None:
     """Governance Plane audit endpoints record and retrieve events."""
     # Trigger an action that creates audit entries
-    governance_client.post("/v1/policy/evaluate", json={"role": "viewer"})
+    governance_client.post("/v1/policy/evaluate", json={"role": "viewer"}, headers=_auth_headers())
 
     # Retrieve all audit entries
-    resp = governance_client.get("/v1/audit")
+    resp = governance_client.get("/v1/audit", headers=_auth_headers())
     assert resp.status_code == 200
     data = resp.json()
     assert data["count"] >= 1
