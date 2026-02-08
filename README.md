@@ -6,11 +6,12 @@
 [![Version](https://img.shields.io/badge/Version-3.1.1-blue.svg)](https://github.com/LEEI1337/NSS/releases)
 [![Status](https://img.shields.io/badge/Status-Concept%20%2F%20RFC-orange.svg)](#)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
+[![Tests](https://img.shields.io/badge/Tests-163%20passing-brightgreen.svg)](#test-suite)
 [![CI](https://img.shields.io/github/actions/workflow/status/LEEI1337/NSS/ci.yml?branch=main&label=CI)](https://github.com/LEEI1337/NSS/actions)
 
 **Sovereign, GDPR-compliant AI infrastructure standard for the European Union.**
 
-> **⚠ Status: Concept / RFC** -- NSS v3.1.1 is a **conceptual standard and reference architecture**. It has **not been independently tested, audited, or verified** by third parties. The code in this repository is a reference implementation for demonstration purposes. Compliance ratings are self-assessed design targets, not certified results. Contributions, feedback, and peer review are welcome.
+> **Status: Concept / RFC** -- NSS v3.1.1 is a **conceptual standard and reference architecture**. It has **not been independently tested, audited, or verified** by third parties. The code in this repository is a reference implementation for demonstration purposes. Compliance ratings are self-assessed design targets, not certified results. Contributions, feedback, and peer review are welcome.
 
 ---
 
@@ -22,6 +23,54 @@ NSS is a conceptual framework designed to meet European regulatory requirements,
 
 ---
 
+## Architecture
+
+```
++=====================================================================+
+|                   Cross-Cutting Concerns                            |
+|   JWT Auth (RBAC)  |  Audit (SHA-256 Chain)  |  Metrics  |  Cache  |
+|   Middleware: SecurityHeaders | Tracing | RateLimit                 |
++=====================================================================+
+|                    Layer 5: Governance Plane [:11339]                |
+|        Policy Engine (OPA)  |  Privacy Budget  |  DPIA Generator    |
++=====================================================================+
+|                    Layer 4: Guardian Shield [:11338]                 |
+|     MARS        | APEX       | SENTINEL    | SHIELD    | VIGIL     |
+|   (Risk Score)  (Model Route) (3-Method     (Defensive   (Tool      |
+|                               Injection     Tokens)     Safety CIA) |
+|                               Defense)                              |
++=====================================================================+
+|                    Layer 3: Cognitive Gateway [:11337]               |
+|    PII Redaction | STEER Transform | PNC Compression | HMAC Sign   |
++=====================================================================+
+|                    Layer 2: Agent Execution                          |
+|        DPSparseVoteRAG (DP Noise)  |  Tool Sandbox (WASM sim)      |
++=====================================================================+
+|                    Layer 1: Knowledge Fabric [:6333]                 |
+|        Qdrant Vector DB  |  Sentence-Transformer Embeddings        |
++=====================================================================+
+|                    Metrics Server [:11340]                           |
++=====================================================================+
+```
+
+Each layer enforces strict isolation boundaries. Requests flow upward from the Knowledge Fabric through Agent Execution, are filtered by the Cognitive Gateway, protected by Guardian Shield, and governed by the Governance Plane. No layer can be bypassed.
+
+---
+
+## Microservice Architecture
+
+| Service | Port | Bind | Description |
+|---------|------|------|-------------|
+| **Cognitive Gateway** | `11337` | External (only entry point) | PII redaction, STEER, PNC, HMAC, pipeline orchestration |
+| **Guardian Shield** | `11338` | Internal (`127.0.0.1`) | MARS scoring, SENTINEL check, APEX routing, SHIELD, VIGIL |
+| **Governance Plane** | `11339` | Internal (`127.0.0.1`) | Policy evaluation, privacy budget, DPIA, audit trail |
+| **Metrics Server** | `11340` | Internal (`127.0.0.1`) | Prometheus-compatible operational metrics |
+| **Qdrant Vector DB** | `6333` | Internal (`127.0.0.1`) | SAG-encrypted vector storage for RAG |
+
+See [Port Schema](docs/architecture/port-schema.md) for network isolation and firewall configuration.
+
+---
+
 ## Key Features
 
 - **Europa-First Architecture** -- Mistral AI foundation models with Ollama local inference; no US Cloud Act exposure
@@ -29,34 +78,9 @@ NSS is a conceptual framework designed to meet European regulatory requirements,
 - **GDPR-Native Design** -- 98/100 compliance rating with built-in PII redaction, privacy budgets, and DPIA automation
 - **EU AI Act Aligned** -- 96/100 compliance rating with full transparency, auditability, and risk classification
 - **Cost Optimization** -- Up to 66% API cost savings via APEX intelligent model routing
+- **Differential Privacy** -- Laplace noise in RAG queries with per-user epsilon budget tracking
+- **Immutable Audit Trail** -- SHA-256 hash-chain audit logging for tamper-evident compliance
 - **Open Source + Commercial Support** -- Dual-licensed under AGPL-3.0 and Commercial License
-
----
-
-## Architecture
-
-```
-+=====================================================================+
-|                    Layer 5: Governance Plane                         |
-|         Policy Engine  |  Privacy Budget  |  DPIA Automation        |
-+=====================================================================+
-|                    Layer 4: Guardian Shield                          |
-|     MARS | APEX | SENTINEL | SHIELD | VIGIL                        |
-|   (Model   (API    (Security   (System   (Validation                |
-|   Audit)   Router)  Monitor)   Hardening) & Integrity)              |
-+=====================================================================+
-|                    Layer 3: Cognitive Gateway                        |
-|         PII Redaction  |  STEER Routing  |  HMAC Signing            |
-+=====================================================================+
-|                    Layer 2: Agent Execution                          |
-|         DPSparseVoteRAG  |  Tool Isolation  |  Sandboxing           |
-+=====================================================================+
-|                    Layer 1: Knowledge Fabric                         |
-|         Qdrant Vector DB  |  Embeddings  |  Document Store          |
-+=====================================================================+
-```
-
-Each layer enforces strict isolation boundaries. Requests flow upward from the Knowledge Fabric through Agent Execution, are filtered by the Cognitive Gateway, protected by Guardian Shield, and governed by the Governance Plane. No layer can be bypassed.
 
 ---
 
@@ -74,24 +98,226 @@ pip install -e ".[dev]"
 ollama pull mistral:7b-instruct-v0.3
 ollama pull mistral-nemo:12b
 
-# Start the Cognitive Gateway server
-python -m nss.gateway.server
+# Start external dependencies (Qdrant + Redis)
+docker compose -f docker/docker-compose.yml up -d qdrant redis
+
+# Start the services (each in a separate terminal)
+python -m nss.gateway.server          # Gateway on :11337
+python -m nss.guardian.server          # Guardian on :11338
+python -m nss.governance.server        # Governance on :11339
+python -m nss.metrics_server           # Metrics on :11340
 ```
 
-> **Prerequisites:** Python 3.11+, [Ollama](https://ollama.ai/) installed and running, Docker (optional, for Qdrant and Redis).
+> **Prerequisites:** Python 3.11+, [Ollama](https://ollama.ai/) installed and running, Docker (for Qdrant and Redis).
+
+### Verify Installation
+
+```bash
+# Health checks
+curl http://127.0.0.1:11337/health
+curl http://127.0.0.1:11338/health
+curl http://127.0.0.1:11339/health
+curl http://127.0.0.1:11340/health
+
+# Example: Process a request through the full pipeline
+curl -X POST http://127.0.0.1:11337/v1/process \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": "user-1", "message": "Was ist GDPR?", "privacy_tier": 1}'
+
+# Example: Check Guardian Shield directly
+curl -X POST http://127.0.0.1:11338/v1/shield/enhance \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Explain data sovereignty"}'
+
+# Example: Evaluate a governance policy
+curl -X POST http://127.0.0.1:11339/v1/policy/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{"role": "viewer", "pii_detected": true, "privacy_tier": 0}'
+```
+
+### Run Tests
+
+```bash
+# Run all 163 tests
+make test
+
+# Run with coverage report
+make test-cov
+
+# Run only integration tests
+python -m pytest tests/test_integration/ -v
+
+# Linting and type checking
+make lint
+make typecheck
+```
 
 ---
 
-## Documentation
+## API Endpoints
 
-| Document | Description |
-|----------|-------------|
-| [White Paper](docs/white-paper/) | Full technical specification and design rationale |
-| [Architecture](docs/architecture/) | Detailed architecture diagrams and component descriptions |
-| [Security](docs/security/) | Security model, threat analysis, and Guardian Shield documentation |
-| [Compliance](docs/compliance/) | GDPR, EU AI Act, and ISO 27001 compliance documentation |
-| [Deployment](docs/deployment/) | Production deployment guides and infrastructure requirements |
-| [Licensing](docs/licensing/) | License terms, commercial options, and contributor agreements |
+### Cognitive Gateway (`:11337`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Liveness/readiness probe |
+| `GET` | `/metrics` | Operational metrics |
+| `POST` | `/v1/process` | Full 6-layer pipeline (PII -> SENTINEL -> MARS -> APEX -> SHIELD -> LLM) |
+
+### Guardian Shield (`:11338`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Service health check |
+| `POST` | `/v1/mars/score` | MARS risk scoring (0-1 score, tier 0-3) |
+| `POST` | `/v1/sentinel/check` | SENTINEL 3-method injection defense |
+| `POST` | `/v1/apex/route` | APEX intelligent model routing |
+| `POST` | `/v1/shield/enhance` | SHIELD defensive token wrapping |
+| `POST` | `/v1/vigil/check` | VIGIL tool-call CIA validation |
+
+### Governance Plane (`:11339`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Service health check |
+| `POST` | `/v1/policy/evaluate` | OPA-style policy evaluation (role, risk, PII, tools) |
+| `GET` | `/v1/privacy/budget/{user_id}` | Remaining epsilon budget for a user |
+| `POST` | `/v1/privacy/consume` | Consume epsilon from privacy budget |
+| `POST` | `/v1/dpia/generate` | Generate GDPR Art. 35 DPIA report |
+| `GET` | `/v1/audit/{audit_id}` | Retrieve specific audit trail entry |
+| `GET` | `/v1/audit` | Retrieve all audit trail entries |
+
+### Metrics Server (`:11340`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Service health check |
+| `GET` | `/metrics` | Full metrics snapshot (counters + histograms) |
+
+---
+
+## Module Reference
+
+### Layer 3: Cognitive Gateway
+
+| Module | File | Description |
+|--------|------|-------------|
+| Gateway Server | `src/nss/gateway/server.py` | FastAPI pipeline orchestrator, entry point for all requests |
+| PII Redaction | `src/nss/gateway/pii_redaction.py` | Regex-based detection and redaction of emails, phones, IBANs, credit cards, IPv4 |
+| STEER | `src/nss/gateway/steer.py` | Structured Transformation: language detection (DE/EN), privacy-tier context injection, normalization |
+| PNC Compression | `src/nss/gateway/pnc_compression.py` | Prompt Normalization and Compression: deduplication, filler removal, token budget truncation |
+| HMAC Signing | `src/nss/gateway/hmac_signing.py` | HMAC-SHA256 request signing and verification with timestamp-based replay protection |
+
+### Layer 4: Guardian Shield
+
+| Module | File | Description |
+|--------|------|-------------|
+| Guardian Server | `src/nss/guardian/server.py` | FastAPI microservice exposing all Guardian components |
+| MARS | `src/nss/guardian/mars.py` | Model Audit & Risk Scoring: LLM-assisted risk evaluation (score 0-1, tier 0-3) |
+| APEX | `src/nss/guardian/apex.py` | Adaptive Processing & Execution: intelligent model routing with cost optimization |
+| SENTINEL | `src/nss/guardian/sentinel.py` | 3-method injection defense: regex rules + LLM analysis + embedding cosine similarity |
+| SHIELD | `src/nss/guardian/shield.py` | Defensive token injection: prepend/append safety tokens around user prompts |
+| VIGIL | `src/nss/guardian/vigil.py` | Tool-call safety validator: CIA triad (Confidentiality, Integrity, Availability) |
+
+### Layer 5: Governance Plane
+
+| Module | File | Description |
+|--------|------|-------------|
+| Governance Server | `src/nss/governance/server.py` | FastAPI microservice for governance endpoints |
+| Policy Engine | `src/nss/governance/policy_engine.py` | OPA/Rego simulation: role-based risk limits, PII privacy tiers, tool allowlists |
+| Privacy Budget | `src/nss/governance/privacy_budget.py` | Per-user differential privacy epsilon budget tracking and enforcement |
+| DPIA Generator | `src/nss/governance/dpia.py` | GDPR Article 35 DPIA auto-generation with 5 sections and markdown export |
+
+### Layer 2: Agent Execution
+
+| Module | File | Description |
+|--------|------|-------------|
+| DPSparseVoteRAG | `src/nss/agent/dp_sparse_vote.py` | Differentially private RAG: Laplace noise on similarity scores, budget tracking |
+| Tool Sandbox | `src/nss/agent/tool_isolation.py` | WASM/WASI simulation via ProcessPoolExecutor with VIGIL pre-check and timeouts |
+
+### Layer 1: Knowledge Fabric
+
+| Module | File | Description |
+|--------|------|-------------|
+| Vector Store | `src/nss/knowledge/vector_store.py` | Qdrant wrapper with GDPR Art. 17 right-to-erasure (`delete_by_user`) |
+| Embeddings | `src/nss/knowledge/embeddings.py` | Sentence-transformer embedding service (all-MiniLM-L6-v2) |
+
+### Cross-Cutting Infrastructure
+
+| Module | File | Description |
+|--------|------|-------------|
+| Config | `src/nss/config.py` | Environment-based configuration with `NSS_` prefix |
+| Models | `src/nss/models.py` | Pydantic v2 data models (NSSRequest, NSSResponse, RiskScore, SentinelResult, etc.) |
+| Auth | `src/nss/auth.py` | JWT creation/verification (HS256, 15min), RBAC (Admin/DataProcessor/Auditor/Viewer) |
+| Audit | `src/nss/audit.py` | Immutable audit logging with SHA-256 hash-chain integrity verification |
+| Metrics | `src/nss/metrics.py` | Lightweight Counter/Histogram registry with snapshot export |
+| Middleware | `src/nss/middleware.py` | SecurityHeaders, TracingMiddleware (X-Trace-ID), RateLimitMiddleware (sliding window) |
+| Cache | `src/nss/cache.py` | Redis async caching with graceful degradation (no-op when unavailable) |
+| Metrics Server | `src/nss/metrics_server.py` | Dedicated FastAPI metrics endpoint |
+| LLM Client | `src/nss/llm/ollama_client.py` | Async Ollama client with health checks and confidence extraction |
+| Model Config | `src/nss/llm/model_config.py` | Model tier definitions for APEX routing decisions |
+
+---
+
+## Test Suite
+
+**163 tests** across **27 test files**, organized by layer:
+
+| Category | Tests | Description |
+|----------|-------|-------------|
+| Gateway | 20 | PII redaction, HMAC signing, STEER, PNC compression |
+| Guardian | 25 | MARS, APEX, SENTINEL (rules + async + embedding), SHIELD, VIGIL |
+| Governance | 18 | Policy engine, privacy budget, DPIA, governance server |
+| Agent | 13 | DPSparseVoteRAG (noise, budget, fallback), tool sandbox |
+| Knowledge | 8 | Vector store, embeddings |
+| LLM | 6 | Ollama client (generate, confidence, health) |
+| Cross-Cutting | 25 | Audit, auth, metrics, middleware, cache, metrics server |
+| Guardian Server | 6 | All Guardian endpoints via TestClient |
+| Governance Server | 5 | All Governance endpoints via TestClient |
+| **Integration** | **24** | **Full pipeline, security pipeline, privacy pipeline, multi-service** |
+
+```bash
+make test           # Run all tests
+make test-cov       # Run with coverage
+make lint           # Linting (ruff)
+make typecheck      # Type checking (mypy)
+```
+
+---
+
+## Cross-Cutting Concerns
+
+### JWT Authentication (RBAC)
+
+- **HS256 tokens** with 15-minute expiry
+- **4 roles**: Admin > DataProcessor > Auditor > Viewer
+- **JWTMiddleware** skips `/health` and `/metrics` endpoints
+- **`require_role()`** FastAPI dependency for endpoint-level enforcement
+
+### Immutable Audit Logging
+
+- **SHA-256 hash-chain**: each entry references the previous hash
+- **Tamper detection**: `verify_integrity()` validates the entire chain
+- **Microsecond timestamps** with UUID4 audit IDs
+- Audit events span all layers (gateway, guardian, governance, agent)
+
+### Metrics & Observability
+
+- **Counters**: `nss_requests_total`, `nss_requests_blocked`, `nss_pii_entities_redacted`, `nss_privacy_budget_consumed`
+- **Histograms**: `nss_request_latency_ms`, `nss_guardian_latency_ms`
+- **Export**: JSON snapshot via `GET /metrics` on port 11340
+
+### Middleware Stack
+
+- **SecurityHeadersMiddleware**: X-Content-Type-Options, HSTS, X-Frame-Options, X-XSS-Protection
+- **TracingMiddleware**: X-Trace-ID (UUID4) generation and propagation
+- **RateLimitMiddleware**: Sliding-window per-IP rate limiting (configurable, default 100 req/min)
+
+### Redis Caching
+
+- **Graceful degradation**: system operates without Redis (cache misses, no errors)
+- **Key schema**: `nss:{layer}:{hash}`
+- **TTL-based** expiration
 
 ---
 
@@ -116,9 +342,78 @@ python -m nss.gateway.server
 | Local Inference | Ollama | On-premises model serving with EU data residency |
 | Vector Database | Qdrant | High-performance similarity search for RAG |
 | Caching Layer | Redis | Session management and response caching |
-| Policy Engine | OPA (Open Policy Agent) | Governance rules and access control |
-| API Gateway | FastAPI | High-performance async HTTP gateway |
+| Policy Engine | OPA (simulated) | Governance rules and access control via Python dicts |
+| API Framework | FastAPI | High-performance async HTTP for all 4 microservices |
+| Auth | PyJWT | HS256 JWT tokens with RBAC |
+| Embeddings | sentence-transformers | all-MiniLM-L6-v2 for SENTINEL and RAG |
 | Runtime | Python 3.11+ | Core application runtime |
+| Testing | pytest | 163 tests with asyncio support |
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [White Paper](docs/white-paper/) | Full technical specification and design rationale |
+| [Architecture](docs/architecture/) | Detailed architecture diagrams and component descriptions |
+| [Port Schema](docs/architecture/port-schema.md) | Microservice ports, network isolation, firewall rules |
+| [Security](docs/security/) | Security model, threat analysis, and Guardian Shield documentation |
+| [Compliance](docs/compliance/) | GDPR, EU AI Act, and ISO 27001 compliance documentation |
+| [Deployment](docs/deployment/) | Production deployment guides and infrastructure requirements |
+| [Licensing](docs/licensing/) | License terms, commercial options, and contributor agreements |
+
+---
+
+## Project Structure
+
+```
+src/nss/
+  config.py              # Environment-based configuration
+  models.py              # Pydantic v2 data models
+  auth.py                # JWT + RBAC authentication
+  audit.py               # SHA-256 hash-chain audit logging
+  metrics.py             # Counter/Histogram metrics
+  middleware.py           # Security, tracing, rate-limit middleware
+  cache.py               # Redis caching with graceful degradation
+  metrics_server.py       # Metrics API server (:11340)
+  gateway/
+    server.py            # Cognitive Gateway (:11337)
+    pii_redaction.py     # PII detection and redaction
+    steer.py             # STEER transformation pipeline
+    pnc_compression.py   # PNC prompt compression
+    hmac_signing.py      # HMAC-SHA256 request signing
+  guardian/
+    server.py            # Guardian Shield API (:11338)
+    mars.py              # MARS risk scoring
+    apex.py              # APEX model routing
+    sentinel.py          # SENTINEL 3-method injection defense
+    shield.py            # SHIELD defensive tokens
+    vigil.py             # VIGIL tool-call CIA validator
+  governance/
+    server.py            # Governance Plane API (:11339)
+    policy_engine.py     # OPA policy simulation
+    privacy_budget.py    # Differential privacy budget tracker
+    dpia.py              # GDPR Art. 35 DPIA generator
+  agent/
+    dp_sparse_vote.py    # DPSparseVoteRAG with Laplace noise
+    tool_isolation.py    # Tool sandbox (WASM simulation)
+  knowledge/
+    vector_store.py      # Qdrant vector store wrapper
+    embeddings.py        # Sentence-transformer embeddings
+  llm/
+    ollama_client.py     # Async Ollama client
+    model_config.py      # Model tier configuration
+tests/
+  conftest.py            # Shared fixtures and mocks
+  test_gateway/          # Gateway layer tests
+  test_guardian/         # Guardian layer tests
+  test_governance/       # Governance layer tests
+  test_agent/            # Agent layer tests
+  test_knowledge/        # Knowledge layer tests
+  test_llm/              # LLM client tests
+  test_integration/      # End-to-end integration tests
+```
 
 ---
 

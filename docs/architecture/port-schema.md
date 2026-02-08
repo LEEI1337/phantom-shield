@@ -1,6 +1,6 @@
 # NSS v3.1.1 -- Port Schema
 
-[Back to Main Documentation](../README.md) | [Full White Paper](../white-paper/NSS-v3.1.1-Enterprise-White-Paper.md)
+[Back to Main Documentation](../../README.md) | [Full White Paper](../white-paper/NSS-v3.1.1-Enterprise-White-Paper.md)
 
 ---
 
@@ -16,9 +16,78 @@ NSS uses a dedicated port schema in the 113XX range (a nod to "LEET") with stric
 |---|---|---|---|
 | **11337** | Cognitive Gateway | **External** (only external port) | Entry point for all API requests. Handles PII redaction, STEER transformation, PNC compression, and HMAC request signing. |
 | **11338** | Guardian Shield | Internal only | Core security layer. Hosts MARS, APEX, SENTINEL, SHIELD, and VIGIL components. |
-| **11339** | Governance Plane | Internal only | Policy engine (OPA), privacy budget tracking, cost budgets, DPIA generation, and Unlearning Orchestrator. |
+| **11339** | Governance Plane | Internal only | Policy engine (OPA), privacy budget tracking, DPIA generation, and audit trail. |
 | **11340** | Metrics | Internal only | Monitoring and observability endpoint for real-time metrics collection. |
 | **6333** | Qdrant Vector DB | Internal only | Knowledge Fabric layer. SAG-encrypted vector storage for RAG operations. |
+
+---
+
+## API Endpoints per Service
+
+### Cognitive Gateway (`:11337`)
+
+| Method | Endpoint | Request Body | Description |
+|--------|----------|-------------|-------------|
+| `GET` | `/health` | -- | Liveness/readiness probe |
+| `GET` | `/metrics` | -- | Basic operational metrics (requests, latency, blocked) |
+| `POST` | `/v1/process` | `NSSRequest` | Full 6-layer pipeline: PII -> SENTINEL -> MARS -> APEX -> SHIELD -> LLM |
+
+**NSSRequest schema:**
+```json
+{
+  "user_id": "string",
+  "message": "string",
+  "privacy_tier": 0,
+  "metadata": {}
+}
+```
+
+### Guardian Shield (`:11338`)
+
+| Method | Endpoint | Request Body | Description |
+|--------|----------|-------------|-------------|
+| `GET` | `/health` | -- | Service health check |
+| `POST` | `/v1/mars/score` | `{"text": "...", "language": "de"}` | MARS risk scoring (score 0-1, tier 0-3) |
+| `POST` | `/v1/sentinel/check` | `{"text": "..."}` | SENTINEL 3-method injection defense (rules + LLM + embedding) |
+| `POST` | `/v1/apex/route` | `{"query": "...", "confidence": 0.9, "budget_remaining": 1.0}` | APEX intelligent model routing |
+| `POST` | `/v1/shield/enhance` | `{"prompt": "..."}` | SHIELD defensive token wrapping |
+| `POST` | `/v1/vigil/check` | `{"tool_name": "...", "args": {}, "user_id": "..."}` | VIGIL tool-call CIA validation |
+
+### Governance Plane (`:11339`)
+
+| Method | Endpoint | Request Body | Description |
+|--------|----------|-------------|-------------|
+| `GET` | `/health` | -- | Service health check |
+| `POST` | `/v1/policy/evaluate` | `{"role": "viewer", "risk_tier": null, "pii_detected": false, "privacy_tier": 0, "tool_name": null}` | OPA-style policy evaluation |
+| `GET` | `/v1/privacy/budget/{user_id}` | -- | Remaining epsilon budget for user |
+| `POST` | `/v1/privacy/consume` | `{"epsilon": 0.1, "user_id": "..."}` | Consume epsilon from privacy budget |
+| `POST` | `/v1/dpia/generate` | `{"processing_activity": "...", "data_categories": [...], "risk_tier": 3, "privacy_budget_remaining": 1.0}` | Generate GDPR Art. 35 DPIA report |
+| `GET` | `/v1/audit/{audit_id}` | -- | Retrieve specific audit trail entry |
+| `GET` | `/v1/audit` | -- | Retrieve all audit trail entries |
+
+### Metrics Server (`:11340`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Service health check |
+| `GET` | `/metrics` | Full metrics snapshot (counters + histograms) |
+
+**Metrics response schema:**
+```json
+{
+  "timestamp": 1707400000,
+  "counters": {
+    "nss_requests_total": 0,
+    "nss_requests_blocked": 0,
+    "nss_pii_entities_redacted": 0,
+    "nss_privacy_budget_consumed": 0
+  },
+  "histograms": {
+    "nss_request_latency_ms": {"count": 0, "sum": 0, "min": 0, "max": 0, "avg": 0},
+    "nss_guardian_latency_ms": {"count": 0, "sum": 0, "min": 0, "max": 0, "avg": 0}
+  }
+}
+```
 
 ---
 
