@@ -1,0 +1,76 @@
+services:
+  nss-gateway:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "11337:11337"
+    environment:
+      - NSS_OLLAMA_BASE_URL=http://ollama:11434
+      - NSS_QDRANT_HOST=qdrant
+      - NSS_REDIS_URL=redis://redis:6379/0
+      - NSS_HMAC_SECRET=${NSS_HMAC_SECRET:-change-me}
+      - NSS_JWT_SECRET=${NSS_JWT_SECRET:-change-me}
+    depends_on:
+      ollama:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - nss-internal
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - nss-internal
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    volumes:
+      - qdrant-data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - nss-internal
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD:-nss-redis-dev}
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - nss-internal
+
+networks:
+  nss-internal:
+    driver: bridge
+
+volumes:
+  ollama-models:
+  qdrant-data:
+  redis-data:

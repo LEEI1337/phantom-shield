@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nss-config
+  namespace: nss
+data:
+  OLLAMA_BASE_URL: "http://ollama:11434"
+  OLLAMA_SMALL_MODEL: "mistral:7b-instruct-v0.3"
+  OLLAMA_LARGE_MODEL: "mistral-nemo:12b"
+  QDRANT_HOST: "qdrant"
+  QDRANT_PORT: "6333"
+  REDIS_URL: "redis://redis:6379/0"
+  GATEWAY_HOST: "127.0.0.1"
+  GATEWAY_PORT: "11337"
+  LOG_LEVEL: "INFO"
+  PRIVACY_EPSILON_BUDGET: "1.0"
+  APEX_CONFIDENCE_THRESHOLD: "0.85"
+  SENTINEL_CONSENSUS_THRESHOLD: "2"
+  VIGIL_RATE_LIMIT: "100"

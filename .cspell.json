@@ -1,0 +1,25 @@
+{
+  "version": "0.2",
+  "language": "en,de",
+  "words": [
+    "MARS", "APEX", "SENTINEL", "SHIELD", "VIGIL",
+    "SAG", "STEER", "DPIA", "DSGVO", "GDPR",
+    "NSS", "SNF", "PII", "TEE", "RBAC", "HMAC",
+    "DPSparseVoteRAG", "DPSparseVote", "Qdrant",
+    "MiniLM", "Mistral", "Ollama", "OPA",
+    "AGPL", "Loopback", "Unlearning",
+    "Fuchs", "LEEI", "Eggendorf", "Eisenstadt",
+    "FastAPI", "Pydantic", "uvicorn",
+    "WASM", "WASI", "kubernetes", "kubectl",
+    "AEAD", "CVSS", "NIST", "FISA", "SSRF",
+    "Corasick", "Mistral-Nemo",
+    "Modifikationen", "Gemeinschaftliche",
+    "Souveränität", "Mittelständisches",
+    "Skalierbarkeit", "Datensicherheit",
+    "Datenminimierung", "Datenportabilität",
+    "Folgeabschätzung", "höchstes"
+  ],
+  "ignorePaths": [
+    "node_modules", ".git", "LICENSE", "LICENSE-COMMERCIAL.md"
+  ]
+}

@@ -1,0 +1,70 @@
+name: Feature Request
+description: Suggest a new feature or enhancement for NSS
+title: "[Feature]: "
+labels: ["enhancement"]
+assignees:
+  - LEEI1337
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a feature. Please provide as much detail as possible.
+
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: Feature Description
+      description: A clear and concise description of the feature you would like.
+      placeholder: Describe the feature...
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: Describe the use case or problem this feature would solve.
+      placeholder: Explain why this feature is needed...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: Describe how you think this feature should work.
+      placeholder: Describe your proposed solution...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives-considered
+    attributes:
+      label: Alternatives Considered
+      description: Describe any alternative solutions or features you have considered.
+      placeholder: Describe alternatives...
+    validations:
+      required: false
+
+  - type: dropdown
+    id: compliance-impact
+    attributes:
+      label: Compliance Impact
+      description: Does this feature affect GDPR or EU AI Act compliance?
+      options:
+        - No compliance impact
+        - GDPR compliance affected
+        - EU AI Act compliance affected
+        - Both GDPR and EU AI Act affected
+        - Unknown / Needs assessment
+    validations:
+      required: true
+
+  - type: textarea
+    id: compliance-details
+    attributes:
+      label: Compliance Impact Details
+      description: If compliance is affected, describe how.
+      placeholder: Describe the compliance impact...
+    validations:
+      required: false

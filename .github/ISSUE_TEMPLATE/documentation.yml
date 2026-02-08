@@ -1,0 +1,58 @@
+name: Documentation
+description: Report missing, incorrect, or unclear documentation
+title: "[Docs]: "
+labels: ["documentation"]
+assignees:
+  - LEEI1337
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve the NSS documentation. Please describe what needs to be documented or updated.
+
+  - type: textarea
+    id: what-needs-documenting
+    attributes:
+      label: What Needs Documenting
+      description: Describe what documentation is missing, incorrect, or unclear.
+      placeholder: Describe the documentation issue...
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-state
+    attributes:
+      label: Current State
+      description: Describe what the current documentation says (if anything).
+      placeholder: Describe the current documentation state...
+    validations:
+      required: false
+
+  - type: textarea
+    id: suggested-content
+    attributes:
+      label: Suggested Content
+      description: Provide a draft or outline of the documentation you would like to see.
+      placeholder: Provide suggested content...
+    validations:
+      required: false
+
+  - type: dropdown
+    id: affected-docs
+    attributes:
+      label: Affected Documentation
+      description: Which documentation area is affected?
+      multiple: true
+      options:
+        - README
+        - White Paper
+        - Architecture
+        - Security
+        - Compliance
+        - Deployment
+        - Licensing
+        - API Reference
+        - Contributing Guide
+        - Other
+    validations:
+      required: true

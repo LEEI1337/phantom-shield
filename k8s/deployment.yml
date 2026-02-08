@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nss-guardian-shield
+  namespace: nss
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: guardian-shield
+  template:
+    metadata:
+      labels:
+        app: guardian-shield
+        version: "3.1.1"
+    spec:
+      containers:
+        - name: gateway
+          image: nss/gateway:3.1.1
+          ports:
+            - containerPort: 11337
+          env:
+            - name: NSS_OLLAMA_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: nss-config
+                  key: OLLAMA_BASE_URL
+            - name: NSS_HMAC_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nss-secrets
+                  key: HMAC_SECRET
+            - name: NSS_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nss-secrets
+                  key: JWT_SECRET
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 11337
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 11337
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+      nodeSelector:
+        node-type: gpu-enabled
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - guardian-shield
+                topologyKey: kubernetes.io/hostname

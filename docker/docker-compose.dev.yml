@@ -1,0 +1,10 @@
+services:
+  nss-gateway:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ../src:/app/src:ro
+    environment:
+      - NSS_LOG_LEVEL=DEBUG
+    command: ["uvicorn", "nss.gateway.server:app", "--host", "127.0.0.1", "--port", "11337", "--reload"]

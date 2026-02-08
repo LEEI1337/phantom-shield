@@ -1,0 +1,25 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'docker/**', 'pyproject.toml']
+  pull_request:
+    paths: ['src/**', 'docker/**', 'pyproject.toml']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: false
+          tags: nss/gateway:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

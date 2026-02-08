@@ -1,0 +1,59 @@
+- name: documentation
+  color: "0075ca"
+  description: Improvements or additions to documentation
+
+- name: enhancement
+  color: "a2eeef"
+  description: New feature or request
+
+- name: bug
+  color: "d73a4a"
+  description: Something is not working
+
+- name: ci/cd
+  color: "f9d0c4"
+  description: Continuous integration and deployment
+
+- name: security
+  color: "e4e669"
+  description: Security-related issues and improvements
+
+- name: compliance
+  color: "c5def5"
+  description: GDPR, EU AI Act, and regulatory compliance
+
+- name: repo-structure
+  color: "bfdadc"
+  description: Repository organization and structure
+
+- name: white-paper
+  color: "d4c5f9"
+  description: White paper content and updates
+
+- name: "priority: critical"
+  color: "b60205"
+  description: Critical priority - immediate attention required
+
+- name: "priority: high"
+  color: "d93f0b"
+  description: High priority
+
+- name: "priority: medium"
+  color: "fbca04"
+  description: Medium priority
+
+- name: "priority: low"
+  color: "0e8a16"
+  description: Low priority
+
+- name: good first issue
+  color: "7057ff"
+  description: Good for newcomers
+
+- name: roadmap
+  color: "006b75"
+  description: Planned features and milestones
+
+- name: implementation
+  color: "1d76db"
+  description: Implementation tasks

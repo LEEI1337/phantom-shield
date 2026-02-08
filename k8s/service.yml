@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nss-gateway
+  namespace: nss
+spec:
+  type: ClusterIP
+  selector:
+    app: guardian-shield
+  ports:
+    - port: 11337
+      targetPort: 11337
+      protocol: TCP
+      name: gateway
