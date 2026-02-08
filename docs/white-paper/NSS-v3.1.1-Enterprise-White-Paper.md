@@ -990,8 +990,7 @@ spec:
 - Technical Architect & Open Source Contributor
 - GitHub: LEEI1337
 - Fokus: EU Digital Sovereignty, Enterprise KI, Privacy-First Architecture
-- Basiert in: 🇦🇹 Austria (Eisenstadt/Eggendorf)
-- Erfahrung: 15+ Jahre Software Development, CNC/Mechanical Engineering
+- Basiert in: 🇦🇹 Austria (Eisenstadt)
 
 ---
 
@@ -1036,7 +1035,7 @@ Nächste Security Review: Mai 2026
 **Community Support:**
 - GitHub Issues: https://github.com/LEEI1337/NSS/issues
 - GitHub Discussions: https://github.com/LEEI1337/NSS/discussions
-- Email: support@nss-standard.eu
+
 
 **Commercial License Support:**
 - Enterprise Support Team
