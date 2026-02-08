@@ -1,6 +1,6 @@
 """Async tests for the SENTINEL injection-defence system."""
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -44,7 +44,8 @@ class TestCheckInjection:
         mock_ollama_client.generate.return_value = "SAFE"
         sentinel = SentinelDefense(ollama_client=mock_ollama_client, consensus_threshold=2)
 
-        result = await sentinel.check_injection("Hello, how are you?")
+        with patch.object(sentinel, "check_embedding_similarity", return_value=False):
+            result = await sentinel.check_injection("Hello, how are you?")
 
         assert isinstance(result, SentinelResult)
         assert result.is_safe is True
@@ -58,7 +59,8 @@ class TestCheckInjection:
         sentinel = SentinelDefense(ollama_client=mock_ollama_client, consensus_threshold=2)
 
         # This text matches the SQL injection regex ("; --" pattern)
-        result = await sentinel.check_injection("'; DROP TABLE users; --")
+        with patch.object(sentinel, "check_embedding_similarity", return_value=False):
+            result = await sentinel.check_injection("'; DROP TABLE users; --")
 
         assert isinstance(result, SentinelResult)
         assert result.method_results["rules"] is False  # rules flagged it
