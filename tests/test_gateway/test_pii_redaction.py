@@ -32,7 +32,7 @@ def test_redact_credit_card() -> None:
 def test_redact_ipv4() -> None:
     text = "Server at 192.168.1.100"
     result, entities = redact_pii(text)
-    assert "[REDACTED_IP]" in result
+    assert "[REDACTED_IPV4]" in result
 
 
 def test_no_pii() -> None:
