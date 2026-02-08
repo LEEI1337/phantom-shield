@@ -5,14 +5,18 @@
 ---
 
 **Dokumenten-Metadaten:**
-- **Dokumenttyp:** Enterprise White Paper
+- **Dokumenttyp:** Conceptual White Paper / RFC
 - **Version:** 3.1.1
-- **Status:** Production-Ready
+- **Status:** Concept / RFC (Not independently verified)
 - **Verfasser:** Jörg Fuchs, Technical Architecture Lead
 - **GitHub:** LEEI1337
 - **Datum:** 08.02.2026
 - **Klassifikation:** Public/Commercial
 - **Zielgruppe:** Enterprise IT, Risk Officer, CTO, Compliance Lead
+
+---
+
+> **⚠ DISCLAIMER:** Dieses White Paper beschreibt ein **konzeptionelles Framework und eine Referenzarchitektur**. NSS v3.1.1 wurde **nicht unabhängig getestet, auditiert oder von Dritten verifiziert**. Alle Compliance-Bewertungen (GDPR 98/100, EU AI Act 96/100, etc.) sind **Selbstbewertungen basierend auf Architekturanalyse** und keine zertifizierten Ergebnisse. Die Referenz-Implementierung dient der Demonstration und ist **nicht produktionsreif**. Vor einem Produktionseinsatz sind unabhängige Sicherheitsaudits, Penetrationstests und formale Compliance-Zertifizierungen erforderlich.
 
 ---
 

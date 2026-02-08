@@ -1,22 +1,24 @@
 # NSS - Nexus Sovereign Standard v3.1.1
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
-[![GDPR](https://img.shields.io/badge/GDPR-98%2F100-brightgreen.svg)](#compliance-ratings)
-[![EU AI Act](https://img.shields.io/badge/EU%20AI%20Act-96%2F100-brightgreen.svg)](#compliance-ratings)
+[![GDPR](https://img.shields.io/badge/GDPR-98%2F100%20(Self--Assessed)-yellow.svg)](#compliance-ratings)
+[![EU AI Act](https://img.shields.io/badge/EU%20AI%20Act-96%2F100%20(Self--Assessed)-yellow.svg)](#compliance-ratings)
 [![Version](https://img.shields.io/badge/Version-3.1.1-blue.svg)](https://github.com/LEEI1337/NSS/releases)
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)](#)
+[![Status](https://img.shields.io/badge/Status-Concept%20%2F%20RFC-orange.svg)](#)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
 [![CI](https://img.shields.io/github/actions/workflow/status/LEEI1337/NSS/ci.yml?branch=main&label=CI)](https://github.com/LEEI1337/NSS/actions)
 
 **Sovereign, GDPR-compliant AI infrastructure standard for the European Union.**
 
+> **⚠ Status: Concept / RFC** -- NSS v3.1.1 is a **conceptual standard and reference architecture**. It has **not been independently tested, audited, or verified** by third parties. The code in this repository is a reference implementation for demonstration purposes. Compliance ratings are self-assessed design targets, not certified results. Contributions, feedback, and peer review are welcome.
+
 ---
 
 ## Overview
 
-NSS (Nexus Sovereign Standard) provides a **6-layer defensive architecture** with **Guardian Shield** for enterprise AI deployments. Built on **Mistral AI** models with local **Ollama** inference, NSS ensures zero Cloud Act exposure and full EU data sovereignty.
+NSS (Nexus Sovereign Standard) proposes a **6-layer defensive architecture** with **Guardian Shield** for enterprise AI deployments. It is designed around **Mistral AI** models with local **Ollama** inference, targeting zero Cloud Act exposure and full EU data sovereignty.
 
-NSS is designed from the ground up to meet the strictest European regulatory requirements, including GDPR and the EU AI Act. Every component operates within EU borders, with no data leaving the sovereign perimeter. The architecture enforces privacy-by-design principles at every layer, from knowledge storage through cognitive processing to governance oversight.
+NSS is a conceptual framework designed to meet European regulatory requirements, including GDPR and the EU AI Act. The architecture targets privacy-by-design principles at every layer, from knowledge storage through cognitive processing to governance oversight. All components are designed to operate within EU borders. **This is a design specification and reference implementation -- production readiness requires independent security audits, penetration testing, and compliance certification.**
 
 ---
 
@@ -97,12 +99,12 @@ python -m nss.gateway.server
 
 | Standard | Rating | Status |
 |----------|--------|--------|
-| GDPR (General Data Protection Regulation) | **98/100** | Compliant |
-| EU AI Act | **96/100** | Compliant |
-| ISO 27001 | **4.1/5** | Aligned |
-| STRIDE Threat Model | **9.7/10** | Secured |
+| GDPR (General Data Protection Regulation) | **98/100** | Self-Assessed Design Target |
+| EU AI Act | **96/100** | Self-Assessed Design Target |
+| ISO 27001 | **4.1/5** | Aligned (Not Certified) |
+| STRIDE Threat Model | **9.7/10** | Self-Assessed |
 
-All compliance ratings are based on independent assessment criteria documented in the [Compliance](docs/compliance/) section.
+> **Note:** All compliance ratings are **self-assessed design targets** based on architectural analysis. They have **not been independently verified or certified**. Production deployments require formal audits by accredited bodies. See the [Compliance](docs/compliance/) section for methodology.
 
 ---
 
