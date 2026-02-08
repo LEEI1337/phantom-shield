@@ -1,7 +1,10 @@
 """Shared test fixtures for NSS test suite."""
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 
+from nss.config import NSSConfig
 from nss.models import NSSRequest
 
 
@@ -25,3 +28,46 @@ def sample_attack_payloads() -> list[str]:
         "; cat /etc/passwd",
         "' OR '1'='1",
     ]
+
+
+@pytest.fixture
+def mock_ollama_client() -> AsyncMock:
+    """AsyncMock of OllamaClient with canned responses."""
+    client = AsyncMock()
+    client.generate.return_value = (
+        '{"score": 0.15, "category": "LOW_RISK", "details": "No issues found."}'
+    )
+    client.generate_with_confidence.return_value = ("Test response", 0.9)
+    client.health_check.return_value = True
+    return client
+
+
+@pytest.fixture
+def mock_config() -> NSSConfig:
+    """Returns an NSSConfig with defaults."""
+    return NSSConfig()
+
+
+@pytest.fixture
+def mock_vector_store() -> AsyncMock:
+    """AsyncMock of VectorStore with canned responses."""
+    store = AsyncMock()
+    store.search.return_value = [
+        {
+            "id": "doc-1",
+            "score": 0.95,
+            "payload": {"text": "Sample document.", "user_id": "user-1"},
+        }
+    ]
+    store.upsert.return_value = None
+    store.delete_by_user.return_value = 0
+    return store
+
+
+@pytest.fixture
+def mock_embedding_service() -> MagicMock:
+    """MagicMock of EmbeddingService with canned responses."""
+    service = MagicMock()
+    service.embed.return_value = [0.1] * 384
+    service.embed_batch.return_value = [[0.1] * 384]
+    return service
