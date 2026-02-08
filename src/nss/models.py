@@ -105,3 +105,27 @@ class RedactedEntity(BaseModel):
     original_length: int
     start: int
     end: int
+
+
+class PolicyDecision(BaseModel):
+    """Result of a governance policy evaluation."""
+    allowed: bool
+    violations: list[str] = []
+    policy_version: str = "1.0.0"
+
+
+class DPIAReport(BaseModel):
+    """GDPR Article 35 Data Protection Impact Assessment report."""
+    report_id: str
+    timestamp: int
+    sections: dict[str, Any] = {}
+    risk_level: str = "UNKNOWN"
+    recommendation: str = "REVIEW_REQUIRED"
+
+
+class ToolResult(BaseModel):
+    """Result from a sandboxed tool execution."""
+    output: str = ""
+    execution_time_ms: float = 0.0
+    sandbox_metadata: dict[str, Any] = {}
+    vigil_verdict: str = "UNKNOWN"
