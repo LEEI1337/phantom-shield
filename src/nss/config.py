@@ -53,6 +53,16 @@ class NSSConfig(BaseSettings):
     # -- Logging ---------------------------------------------------------
     log_level: str = "INFO"
 
+    # -- Audit -----------------------------------------------------------
+    audit_chain_enabled: bool = True
+
+    # -- Rate limiting ---------------------------------------------------
+    rate_limit_rpm: int = 100
+
+    # -- TLS (optional) --------------------------------------------------
+    tls_cert_path: str = ""
+    tls_key_path: str = ""
+
 
 # Module-level singleton (import and use directly).
 config = NSSConfig()
