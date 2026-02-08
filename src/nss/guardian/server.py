@@ -15,6 +15,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from nss.config import config
+from nss.middleware import SecurityHeadersMiddleware, TracingMiddleware
 from nss.guardian.apex import APEXRouter
 from nss.guardian.mars import MARSScorer, classify_tier
 from nss.guardian.sentinel import SentinelDefense
@@ -86,6 +87,9 @@ app = FastAPI(
     version="3.1.1",
     lifespan=lifespan,
 )
+
+app.add_middleware(TracingMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 @app.get("/health")

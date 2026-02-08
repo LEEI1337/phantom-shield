@@ -22,6 +22,52 @@ services:
       - nss-internal
     restart: unless-stopped
 
+  nss-guardian:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: ["uvicorn", "nss.guardian.server:app", "--host", "0.0.0.0", "--port", "11338"]
+    ports:
+      - "11338:11338"
+    environment:
+      - NSS_OLLAMA_BASE_URL=http://ollama:11434
+      - NSS_HMAC_SECRET=${NSS_HMAC_SECRET:-change-me}
+      - NSS_JWT_SECRET=${NSS_JWT_SECRET:-change-me}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - nss-internal
+    restart: unless-stopped
+
+  nss-governance:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: ["uvicorn", "nss.governance.server:app", "--host", "0.0.0.0", "--port", "11339"]
+    ports:
+      - "11339:11339"
+    environment:
+      - NSS_REDIS_URL=redis://redis:6379/0
+      - NSS_JWT_SECRET=${NSS_JWT_SECRET:-change-me}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - nss-internal
+    restart: unless-stopped
+
+  nss-metrics:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: ["uvicorn", "nss.metrics_server:app", "--host", "0.0.0.0", "--port", "11340"]
+    ports:
+      - "11340:11340"
+    networks:
+      - nss-internal
+    restart: unless-stopped
+
   ollama:
     image: ollama/ollama:latest
     volumes:

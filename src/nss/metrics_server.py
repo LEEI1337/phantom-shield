@@ -10,11 +10,15 @@ from fastapi import FastAPI
 
 from nss.config import config
 from nss.metrics import metrics_snapshot
+from nss.middleware import SecurityHeadersMiddleware, TracingMiddleware
 
 app = FastAPI(
     title="NSS Metrics",
     version="3.1.1",
 )
+
+app.add_middleware(TracingMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 @app.get("/health")

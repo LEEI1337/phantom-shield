@@ -15,6 +15,7 @@ from pydantic import BaseModel
 
 from nss.audit import AuditLogger
 from nss.config import config
+from nss.middleware import SecurityHeadersMiddleware, TracingMiddleware
 from nss.governance.dpia import DPIAGenerator
 from nss.governance.policy_engine import PolicyEngine
 from nss.governance.privacy_budget import PrivacyBudgetTracker
@@ -57,6 +58,9 @@ app = FastAPI(
     title="NSS Governance Plane",
     version="3.1.1",
 )
+
+app.add_middleware(TracingMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 @app.get("/health")
