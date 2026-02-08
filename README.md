@@ -424,7 +424,7 @@ NSS is dual-licensed:
 - **[AGPL-3.0](LICENSE)** -- For open-source use, research, and personal projects
 - **[Commercial License](LICENSE-COMMERCIAL.md)** -- For proprietary deployments and enterprise use
 
-If you use NSS in a proprietary product or service, you must obtain a commercial license. Contact [license@nss-standard.eu](mailto:license@nss-standard.eu) for details.
+If you use NSS in a proprietary product or service, you must obtain a commercial license. Contact for details.
 
 ---
 
@@ -440,14 +440,14 @@ All contributors must agree to the [Contributor License Agreement (CLA)](CLA.md)
 
 For security-related information, please see our [Security Policy](SECURITY.md).
 
-- **Critical/High vulnerabilities:** Report via email to [security@nss-standard.eu](mailto:security@nss-standard.eu)
+- **Critical/High vulnerabilities:** Report 
 - **Low/Medium vulnerabilities:** Open a [Security Issue](https://github.com/LEEI1337/NSS/issues/new?template=security_vulnerability.yml)
 
 ---
 
 ## Author
 
-**Jorg Fuchs** -- Technical Architect
+**LEEI1337** -- Technical Architect
 
 - GitHub: [@LEEI1337](https://github.com/LEEI1337)
 - Location: Austria
@@ -460,8 +460,7 @@ For security-related information, please see our [Security Policy](SECURITY.md).
 |---------|--------|
 | Bug Reports | [GitHub Issues](https://github.com/LEEI1337/NSS/issues) |
 | Discussions | [GitHub Discussions](https://github.com/LEEI1337/NSS/discussions) |
-| General Support | [support@nss-standard.eu](mailto:support@nss-standard.eu) |
-| Commercial Inquiries | [enterprise@nss-standard.eu](mailto:enterprise@nss-standard.eu) |
+
 
 ---
 
