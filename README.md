@@ -7,7 +7,10 @@
 [![Status](https://img.shields.io/badge/Status-Concept%20%2F%20RFC-orange.svg)](#)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
 [![Tests](https://img.shields.io/badge/Tests-209%20passing-brightgreen.svg)](#test-suite)
-[![CI](https://img.shields.io/github/actions/workflow/status/LEEI1337/NSS/ci.yml?branch=main&label=CI)](https://github.com/LEEI1337/NSS/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/LEEI1337/NSS/python-ci.yml?branch=main&label=CI)](https://github.com/LEEI1337/NSS/actions)
+[![Security](https://img.shields.io/github/actions/workflow/status/LEEI1337/NSS/security-scan.yml?branch=main&label=Security)](https://github.com/LEEI1337/NSS/actions)
+[![Docker](https://img.shields.io/github/actions/workflow/status/LEEI1337/NSS/docker-build.yml?branch=main&label=Docker)](https://github.com/LEEI1337/NSS/actions)
+[![codecov](https://codecov.io/gh/LEEI1337/NSS/branch/main/graph/badge.svg)](https://codecov.io/gh/LEEI1337/NSS)
 
 **Sovereign, GDPR-compliant AI infrastructure standard for the European Union.**
 
@@ -378,10 +381,13 @@ make typecheck      # Type checking (mypy)
 | Document | Description |
 |----------|-------------|
 | [White Paper](docs/white-paper/) | Full technical specification and design rationale |
+| [API Reference](docs/api/openapi-spec.md) | Complete REST API documentation for all 4 microservices |
 | [Architecture](docs/architecture/) | Detailed architecture diagrams and component descriptions |
+| [ADRs](docs/adr/) | Architecture Decision Records (license, models, inference, layers, HMAC) |
 | [Port Schema](docs/architecture/port-schema.md) | Microservice ports, network isolation, firewall rules |
 | [Security](docs/security/) | Security model, threat analysis, and Guardian Shield documentation |
 | [Compliance](docs/compliance/) | GDPR, EU AI Act, and ISO 27001 compliance documentation |
+| [Benchmarks](docs/benchmarks/methodology.md) | Reproducible benchmark methodology for performance metrics |
 | [Deployment](docs/deployment/) | Production deployment guides and infrastructure requirements |
 | [Licensing](docs/licensing/) | License terms, commercial options, and contributor agreements |
 

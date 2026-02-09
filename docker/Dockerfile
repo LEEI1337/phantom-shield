@@ -24,4 +24,4 @@ EXPOSE 11337
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import httpx; httpx.get('http://127.0.0.1:11337/health').raise_for_status()"
 
-CMD ["uvicorn", "nss.gateway.server:app", "--host", "127.0.0.1", "--port", "11337"]
+CMD ["uvicorn", "nss.gateway.server:app", "--host", "0.0.0.0", "--port", "11337"]

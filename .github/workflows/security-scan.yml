@@ -16,3 +16,24 @@ jobs:
       - uses: trufflesecurity/trufflehog@main
         with:
           extra_args: --only-verified
+
+  sast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install bandit
+        run: pip install bandit[toml]
+      - name: Run bandit SAST scan
+        run: bandit -r src/nss/ -c pyproject.toml -f json -o bandit-report.json || true
+      - name: Display bandit results
+        run: bandit -r src/nss/ -c pyproject.toml -ll
+      - name: Upload bandit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json

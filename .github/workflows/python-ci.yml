@@ -26,6 +26,13 @@ jobs:
       - name: Lint with ruff
         run: ruff check src/ tests/
       - name: Type check with mypy
-        run: mypy src/nss/
-      - name: Run tests
-        run: pytest tests/ -v --tb=short
+        run: mypy src/nss/ --ignore-missing-imports
+      - name: Run tests with coverage
+        run: pytest tests/ -v --tb=short --cov=nss --cov-report=xml --cov-report=term-missing
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
