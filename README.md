@@ -58,6 +58,113 @@ NSS is a conceptual framework designed to meet European regulatory requirements,
 +=====================================================================+
 ```
 
+### 🏗️ Architecture Visualization (Mermaid Diagrams)
+
+#### Layer Stack (Data Flow)
+
+```mermaid
+graph TD
+    A["👤 Client Request"] -->|HMAC Signed| B["Layer 3: Cognitive Gateway<br/>(PII Redaction, STEER, PNC)"]
+    B -->|Sanitized| C["Layer 4: Guardian Shield<br/>(MARS, APEX, SENTINEL,<br/>SHIELD, VIGIL)"]
+    C -->|Risk Assessed| D["Layer 5: Governance Plane<br/>(Policy Engine, Privacy Budget,<br/>DPIA, Audit)"]
+    D -->|Approved| E["Layer 2: Agent Execution<br/>(DPSparseVoteRAG, Tool Sandbox)"]
+    E -->|Query| F["Layer 1: Knowledge Fabric<br/>(Qdrant VectorDB, SAG Encryption,<br/>RAG Pipeline)"]
+    F -->|Results| G["🔄 Response Pipeline"]
+    G -->|Encrypted| H["✅ Client Response"]
+    
+    style A fill:#e1f5ff
+    style B fill:#fff3e0
+    style C fill:#ffe0b2
+    style D fill:#f3e5f5
+    style E fill:#e8f5e9
+    style F fill:#fce4ec
+    style H fill:#c8e6c9
+```
+
+#### Guardian Shield Defense Mechanisms
+
+```mermaid
+graph LR
+    Input["🔍 Incoming Request"]
+    
+    Input --> MARS["⚡ MARS<br/>Risk Scoring<br/>0.0-1.0"]
+    Input --> SENTINEL["🛡️ SENTINEL<br/>Injection Defense<br/>Regex + LLM + Embedding"]
+    Input --> VIGIL["👁️ VIGIL<br/>Tool CIA Check<br/>Confidentiality, Integrity,<br/>Availability"]
+    
+    MARS -->|Score < 0.7| PASS1{"Safe?"}
+    SENTINEL -->|No Injection| PASS2{"Safe?"}
+    VIGIL -->|Tool Allowed| PASS3{"Safe?"}
+    
+    PASS1 -->|Yes| APEX["🔀 APEX<br/>Model Routing<br/>Cost Optimization"]
+    PASS2 -->|Yes| APEX
+    PASS3 -->|Yes| APEX
+    
+    PASS1 -->|No| SHIELD["⛔ SHIELD<br/>Defensive Tokens<br/>Wrap & Block"]
+    PASS2 -->|No| SHIELD
+    PASS3 -->|No| SHIELD
+    
+    APEX -->|Route to Best Model| LLM["🤖 LLM<br/>Inference"]
+    SHIELD -->|Blocked| BLOCK["❌ Request Denied"]
+    
+    style Input fill:#e3f2fd
+    style MARS fill:#fff9c4
+    style SENTINEL fill:#ffccbc
+    style VIGIL fill:#f8bbd0
+    style APEX fill:#c8e6c9
+    style SHIELD fill:#ffcdd2
+    style LLM fill:#b3e5fc
+    style BLOCK fill:#d32f2f
+```
+
+#### Microservice Communication
+
+```mermaid
+architecture-beta
+    group api[
+        component cg["🚪 Cognitive Gateway<br/>:11337"]
+    ]
+    group internal[
+        component gs["🛡️ Guardian Shield<br/>:11338"]
+        component gp["📋 Governance Plane<br/>:11339"]
+        component ms["📊 Metrics Server<br/>:11340"]
+    ]
+    group data[
+        component qdrant["🔍 Qdrant VectorDB<br/>:6333"]
+        component redis["⚡ Redis Cache<br/>:6379"]
+    ]
+    
+    cg --> gs: HTTP
+    cg --> gp: HTTP
+    cg --> qdrant: gRPC
+    cg --> redis: Redis Proto
+    gs --> gp: HTTP
+    ms -."Metrics from all services".-> gs
+    ms -.-> gp
+    ms -.-> cg
+```
+
+#### Privacy & Compliance Flow
+
+```mermaid
+graph TD
+    A["📝 User Request<br/>Privacy Tier: 0-3"] --> B["🔐 Privacy Budget<br/>Check Epsilon Budget"]
+    B -->|Budget OK| C["📊 DPIA Generator<br/>Auto-generate Art. 35<br/>Report"]
+    B -->|Budget Exhausted| D["⛔ Request Blocked<br/>Privacy Limit Exceeded"]
+    
+    C --> E["🔎 Differential Privacy<br/>Add Laplace Noise<br/>to RAG Results"]
+    E --> F["📉 Privacy Budget<br/>Consume Epsilon"]
+    F --> G["🗑️ Retention Policy<br/>Schedule Deletion<br/>90 days default"]
+    G --> H["✅ Compliant Response"]
+    
+    style A fill:#e1f5ff
+    style B fill:#fff3e0
+    style D fill:#ffcdd2
+    style C fill:#f3e5f5
+    style E fill:#e8f5e9
+    style F fill:#fce4ec
+    style H fill:#c8e6c9
+```
+
 Each layer enforces strict isolation boundaries. Requests flow upward from the Knowledge Fabric through Agent Execution, are filtered by the Cognitive Gateway, protected by Guardian Shield, and governed by the Governance Plane. No layer can be bypassed.
 
 ---
