@@ -119,22 +119,24 @@ graph LR
 #### Microservice Communication
 
 ```mermaid
-architecture-beta
-    group api[
-        component cg["🚪 Cognitive Gateway<br/>:11337"]
-    ]
-    group internal[
-        component gs["🛡️ Guardian Shield<br/>:11338"]
-        component gp["📋 Governance Plane<br/>:11339"]
-        component ms["📊 Metrics Server<br/>:11340"]
-    ]
-    group data[
-        component qdrant["🔍 Qdrant VectorDB<br/>:6333"]
-        component redis["⚡ Redis Cache<br/>:6379"]
-    ]
+ graph TD
+    CG["🚪 Cognitive Gateway<br/>:11337<br/>External"] -->|HTTP| GS["🛡️ Guardian Shield<br/>:11338<br/>Internal"]
+    CG -->|HTTP| GP["📋 Governance Plane<br/>:11339<br/>Internal"]
+    CG -->|gRPC| QD["🔍 Qdrant VectorDB<br/>:6333<br/>Internal"]
+    CG -->|Redis Proto| RC["⚡ Redis Cache<br/>:6379<br/>Internal"]
+    GS -->|HTTP| GP
     
-    cg --> gs: HTTP
-    cg --> gp: HTTP
+    MS["📊 Metrics Server<br/>:11340"] -.->|Collects| GS
+    MS -.->|Collects| GP
+    MS -.->|Collects| CG
+    
+    style CG fill:#e3f2fd
+    style GS fill:#fff3e0
+    style GP fill:#f3e5f5
+    style QD fill:#fce4ec
+    style RC fill:#fff9c4
+    style MS fill:#e0f2f1
+```
     cg --> qdrant: gRPC
     cg --> redis: Redis Proto
     gs --> gp: HTTP
