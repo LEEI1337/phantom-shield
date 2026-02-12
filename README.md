@@ -58,7 +58,7 @@ NSS is a conceptual framework designed to meet European regulatory requirements,
 +=====================================================================+
 ```
 
-### 🏗️ 65
+### 🏗️ Architecture Visualization (Mermaid Diagrams)
 (Mermaid Diagrams)
 
 #### Layer Stack (Data Flow)
