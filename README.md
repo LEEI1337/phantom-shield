@@ -58,7 +58,8 @@ NSS is a conceptual framework designed to meet European regulatory requirements,
 +=====================================================================+
 ```
 
-### 🏗️ Architecture Visualization (Mermaid Diagrams)
+### 🏗️ 65
+(Mermaid Diagrams)
 
 #### Layer Stack (Data Flow)
 
@@ -72,13 +73,13 @@ graph TD
     F -->|Results| G["🔄 Response Pipeline"]
     G -->|Encrypted| H["✅ Client Response"]
     
-    style A fill:#e1f5ff
-    style B fill:#fff3e0
-    style C fill:#ffe0b2
-    style D fill:#f3e5f5
-    style E fill:#e8f5e9
-    style F fill:#fce4ec
-    style H fill:#c8e6c9
+    style A fill:#e1f5ff,color:#000
+    style B fill:#fff3e0,color:#000
+    style C fill:#ffe0b2,color:#000
+    style D fill:#f3e5f5,color:#000
+    style E fill:#e8f5e9,color:#000
+    style F fill:#fce4ec,color:#000
+    style H fill:#c8e6c9,color:#000
 ```
 
 #### Guardian Shield Defense Mechanisms
@@ -106,14 +107,14 @@ graph LR
     APEX -->|Route to Best Model| LLM["🤖 LLM<br/>Inference"]
     SHIELD -->|Blocked| BLOCK["❌ Request Denied"]
     
-    style Input fill:#e3f2fd
-    style MARS fill:#fff9c4
-    style SENTINEL fill:#ffccbc
-    style VIGIL fill:#f8bbd0
-    style APEX fill:#c8e6c9
-    style SHIELD fill:#ffcdd2
-    style LLM fill:#b3e5fc
-    style BLOCK fill:#d32f2f
+    style Input fill:#e3f2fd,color:#000
+    style MARS fill:#fff9c4,color:#000
+    style SENTINEL fill:#ffccbc,color:#000
+    style VIGIL fill:#f8bbd0,color:#000
+    style APEX fill:#c8e6c9,color:#000
+    style SHIELD fill:#ffcdd2,color:#000
+    style LLM fill:#b3e5fc,color:#000
+    style BLOCK fill:#d32f2f,color:#000
 ```
 
 #### Microservice Communication
@@ -158,13 +159,13 @@ graph TD
     F --> G["🗑️ Retention Policy<br/>Schedule Deletion<br/>90 days default"]
     G --> H["✅ Compliant Response"]
     
-    style A fill:#e1f5ff
-    style B fill:#fff3e0
-    style D fill:#ffcdd2
-    style C fill:#f3e5f5
-    style E fill:#e8f5e9
-    style F fill:#fce4ec
-    style H fill:#c8e6c9
+    style A fill:#e1f5ff,color:#000
+    style B fill:#fff3e0,color:#000
+    style D fill:#ffcdd2,color:#000
+    style C fill:#f3e5f5,color:#000
+    style E fill:#e8f5e9,color:#000
+    style F fill:#fce4ec,color:#000
+    style H fill:#c8e6c9,color:#000
 ```
 
 Each layer enforces strict isolation boundaries. Requests flow upward from the Knowledge Fabric through Agent Execution, are filtered by the Cognitive Gateway, protected by Guardian Shield, and governed by the Governance Plane. No layer can be bypassed.
