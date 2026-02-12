@@ -131,12 +131,12 @@ graph LR
     MS -.->|Collects| GP
     MS -.->|Collects| CG
     
-    style CG fill:#e3f2fd
-    style GS fill:#fff3e0
-    style GP fill:#f3e5f5
-    style QD fill:#fce4ec
-    style RC fill:#fff9c4
-    style MS fill:#e0f2f1
+    style CG fill:#e3f2fd,color:#000
+    style GS fill:#fff3e0,color:#000
+    style GP fill:#f3e5f5,color:#000
+    style QD fill:#fce4ec,color:#000
+    style RC fill:#fff9c4,color:#000
+    style MS fill:#e0f2f1,color:#000
 ```
     cg --> qdrant: gRPC
     cg --> redis: Redis Proto
